@@ -40,7 +40,7 @@ export const App = () => {
   )
 
     const onSubmit = (query) => {
-      console.log(query);
+      // console.log(query);
         setQuery(query);
         setCurrentPage(1);
         setImagesArray([]);
