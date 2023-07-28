@@ -1,96 +1,90 @@
-import { Component } from "react";
+import { useState, useEffect } from "react";
 import { getImages } from "../API/API"
-
-
-import { SearchBar } from "./Searchbar/Searchbar.jsx"
+import { SearchBar } from "./SearchBar/SearchBar.jsx"
 import { ImageGallery } from "./ImageGallery/ImageGallery.jsx"
 import { Button } from "./Button/Button";
 import { Modal } from "./Modal/Modal";
 import { Loader } from "./Loader/Loader";
 
+export const App = () => {
 
-export class App extends Component {
-
-  state = {
-    query: "",
-    imagesArray: [],
-    currentPage: 1,
-    perPage: 12,
-    totalHits: 0,
-    loading: false,
-    isModalOpen: false,
-    largeImageURL: ""
-  }
-
+    const [query, setQuery] = useState('');
+    const [imagesArray, setImagesArray] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalHits, setTotalHits] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false)
+  const [largeImageURL, setLargeImageURL] = useState('')
   
-  async componentDidUpdate(prevProps, prevState) {
-    if (prevState.query !== this.state.query || prevState.currentPage !== this.state.currentPage) {
-      this.setState({ loading: true });
-      const result = await getImages(this.state.query, this.state.currentPage, this.state.perPage);
-      console.log(result)
-      if (result) {
-        this.setState((prevState) => ({
-          imagesArray: [...prevState.imagesArray, ...result.hits],
-          totalHits: result.totalHits,
-          loading: false,
-        }));
-      } else {
-        this.setState({ loading: false });
-      }
+  useEffect(() => {
+    const fetchImages = async () => {
+        setLoading(true);
+        const result = await getImages(query, currentPage);
+        console.log(result);
+        if (result) {
+          setImagesArray((prevImagesArray) => [
+            ...prevImagesArray,
+            ...result.hits,
+          ]);
+          setTotalHits(result.totalHits);
+          setLoading(false);
+        } else {
+          setLoading(false);
+        }
+     };
+
+    if (query !== "") {
+      fetchImages();
     }
+    }, [query, currentPage]
+  )
 
-   
-  }
+    const onSubmit = (query) => {
+      console.log(query);
+        setQuery(query);
+        setCurrentPage(1);
+        setImagesArray([]);
+    }
   
-  
-  onSubmit = (state) => {
-      console.log(state);
-      this.setState({ query: state, currentPage: 1, imagesArray: [] });
-  }
-  
-  handleLoadMore = () => {
-    this.setState(
-      (prevState) => ({ currentPage: prevState.currentPage + 1 })      
-    );
-  };
+    const handleLoadMore = () => {
+        setCurrentPage(currentPage + 1);
+    };
 
-  modalOpen = (largeImg) => {
-    this.setState({ largeImageURL: largeImg, isModalOpen: true });
-  };
+    const modalOpen = (largeImg) => {
+        setLargeImageURL(largeImg);
+        setIsModalOpen(true);
+    };
 
-  modalClose = () => {
-    this.setState({ isModalOpen: false });
-  };
-  
-  render() {
-    const { imagesArray, totalHits } = this.state;
-    return (
+    const modalClose = () => {
+        setIsModalOpen(false)
+    };
+
+      return (
       <div>
         <SearchBar
-          onSubmit={this.onSubmit}
+          onSubmit={onSubmit}
         />
-        {this.state.loading && (
+        {loading && (
           <Loader/>          
         )} 
         <ImageGallery
-          imagesArray={this.state.imagesArray}
-          modalOpen={this.modalOpen}
+          imagesArray={imagesArray}
+          modalOpen={modalOpen}
         />
         
-        { this.state.loading === false &&
+        { loading === false &&
           imagesArray.length !== 0 &&
           imagesArray.length < totalHits &&
             <Button
-              handleLoadMore={this.handleLoadMore}
+              handleLoadMore={handleLoadMore}
             />          
         }
-        {this.state.isModalOpen && (
+        {isModalOpen && (
           <Modal
-            modalClose={this.modalClose}
-            largeImageURL={this.state.largeImageURL}
+            modalClose={modalClose}
+            largeImageURL={largeImageURL}
          />
         )}
       </div>
     );    
-  }
-};
+}
