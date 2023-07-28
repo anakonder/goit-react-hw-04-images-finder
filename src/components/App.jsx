@@ -88,3 +88,5 @@ export const App = () => {
       </div>
     );    
 }
+
+const data = 0
